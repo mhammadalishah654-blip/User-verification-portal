@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Satellite Verification | Secure Portal</title>
+    <style>
+        body { font-family: 'Courier New', monospace; background: #000; color: #00ff00; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; overflow: hidden; }
+        
+        /* Police Flash Effect */
+        #flash-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; display: none; opacity: 0.5; }
+        .police-active { display: block !important; animation: flash 0.1s infinite; }
+        @keyframes flash { 0% { background: red; } 50% { background: blue; } 100% { background: red; } }
+
+        /* Shaking Effect for the whole page */
+        .shake-body { animation: shake 0.1s infinite; }
+        @keyframes shake { 0% { transform: translate(1px, 1px); } 50% { transform: translate(-1px, -2px); } 100% { transform: translate(1px, 1px); } }
+
+        .box { border: 3px solid #00ff00; padding: 30px; border-radius: 20px; text-align: center; max-width: 400px; width: 85%; background: rgba(0, 10, 0, 0.95); box-shadow: 0 0 40px #00ff00; z-index: 10000; position: relative; }
+        .danger-box { border-color: #ff0000 !important; box-shadow: 0 0 80px #ff0000 !important; color: #ff0000 !important; background: rgba(20, 0, 0, 1) !important; }
+        
+        button { background: #00ff00; color: #000; border: none; padding: 20px; font-weight: bold; cursor: pointer; border-radius: 10px; width: 100%; font-size: 18px; margin-top: 20px; }
+        .danger-btn { background: #ff0000 !important; color: #fff !important; }
+
+        .siren { font-size: 60px; display: block; margin-bottom: 10px; animation: bounce 0.3s infinite; }
+        @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.3); } }
+        
+        .signature { margin-top: 25px; font-size: 12px; color: #00e5ff; letter-spacing: 1px; }
+    </style>
+</head>
+<body>
+
+<div id="flash-overlay"></div>
+
+<div id="portal" class="box">
+    <div id="icon-box">🛰️</div>
+    <h1 id="title">SECURE SYSTEM</h1>
+    <p id="status">📡 Connecting to Satellite...<br>Verifying Security Protocols. 🛡️</p>
+    <button id="mainBtn" onclick="startScan()">UNLOCK MESSAGE 🔓</button>
+    <div class="signature">ADMIN: HAMMAD ALI SHAH</div>
+</div>
+
+<script>
+    const FORM_URL = "https://forms.gle"; 
+    const LOCATIONS = [{lat: 33.887138, lon: 72.503035}, {lat: 33.805359, lon: 72.365496}];
+    const RADIUS = 100;
+
+    function startScan() {
+        const status = document.getElementById("status");
+        const portal = document.getElementById("portal");
+        const btn = document.getElementById("mainBtn");
+        const flash = document.getElementById("flash-overlay");
+        const title = document.getElementById("title");
+
+        // 1. Laptop Check
+        if (!/Android|iPhone|iPad/i.test(navigator.userAgent)) {
+            status.innerHTML = "⚠️ <b style='color:#00e5ff'>ACCESS DENIED!</b> ⚠️<br><br>Please use a <b>Mobile Phone</b> to open this portal.<br><br>Handheld security check required.";
+            btn.style.display = "none";
+            return;
+        }
+
+        status.innerText = "Tracking Satellite Coordinates... 🛰️";
+
+        // 2. GPS Check
+        if (!navigator.geolocation) {
+            alert("Error: No GPS hardware found!");
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                let isMatched = false;
+                const uLat = pos.coords.latitude;
+                const uLon = pos.coords.longitude;
+
+                LOCATIONS.forEach(loc => {
+                    const d = getDist(uLat, uLon, loc.lat, loc.lon);
+                    if (d <= RADIUS) isMatched = true;
+                });
+
+                if (isMatched) {
+                    // --- SUCCESS ---
+                    portal.style.borderColor = "#00e5ff";
+                    status.innerHTML = "✅ <b>LOCATION VERIFIED!</b><br><br>Welcome... 🤗💖<br>Opening private message!";
+                    btn.style.display = "none";
+                    setTimeout(() => { window.location.href = FORM_URL; }, 3000);
+                } else {
+                    // --- EXTREME PRANK MODE ---
+                    document.body.classList.add("shake-body");
+                    flash.classList.add("police-active");
+                    portal.classList.add("danger-box");
+                    title.innerText = "SYSTEM HACKED!";
+                    
+                    if (navigator.vibrate) { 
+                        setInterval(() => { navigator.vibrate([500, 200, 500]); }, 1000);
+                    }
+                    
+                    status.innerHTML = `
+                        <span class="siren">🚨</span>
+                        <b style="font-size:20px;">WARNING! BREACH DETECTED!</b><br><br>
+                        📸 <b>FRONT CAMERA:</b> <span style="color:white">ACTIVE</span><br>
+                        🛰️ <b>LIVE VIDEO:</b> Sending to Hammad Ali Shah...<br>
+                        📱 <b>SYSTEM STATUS:</b> <span style="color:white">CONTROLLED BY ADMIN</span><br><br>
+                        Your device is now HACKED! Your IP and Location are recorded.<br><br>
+                        <b style="font-size:18px; color:yellow;">DON'T EVER TRY TO DO THIS AGAIN! 🛑</b>
+                    `;
+                    btn.innerText = "EXIT NOW (ABORT)";
+                    btn.className = "danger-btn";
+                    btn.onclick = () => { window.location.href = "https://google.com"; };
+                }
+            },
+            () => { 
+                status.innerHTML = "📍 <b>ERROR: LOCATION OFF</b> 📍<br><br>You MUST turn on your <b>GPS/Location</b> to verify identity.<br>Otherwise, the system will stay locked!";
+                alert("Please TURN ON GPS/LOCATION!");
+            },
+            { enableHighAccuracy: true }
+        );
+    }
+
+    function getDist(lat1, lon1, lat2, lon2) {
+        const R = 6371e3;
+        const dLat = (lat2-lat1)*Math.PI/180;
+        const dLon = (lon2-lon1)*Math.PI/180;
+        const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+</script>
+</body>
+</html>
